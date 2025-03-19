@@ -151,10 +151,11 @@ fn main(){
 
 	let ballance = ballance;
 
-	for (idx, money) in ballance.iter().enumerate() {
+	for (idx, money_so_far) in ballance.iter().enumerate() {
 		let day = idx + 1;
+		let ballance_day = money_per_day - expenditures[idx];
 
-		print!("{day:2}: {money:7.2}");
+		print!("{day:2}: {money_so_far:7.2} [{ballance_day:6.2}]");
 		if day == today.try_into().unwrap() {
 			println!(" <");
 		}else{
