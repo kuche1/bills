@@ -72,8 +72,8 @@ fn main(){
 
 	let date = chrono::offset::Local::now().date_naive();
 	let days_in_month: usize = date.days_in_month().try_into().unwrap();
-	// let year = date.year();
-	// let month = date.month();
+	let year = date.year();
+	let month = date.month();
 	let today = date.day();
 
 	let data = fs::read_to_string(args.bills_toml)
@@ -151,12 +151,12 @@ fn main(){
 
 	let ballance = ballance;
 
-	println!("day_of_month: ballance_so_far [ballance_this_day]");
+	println!("date: ballance_so_far [ballance_this_day]");
 
 	for (idx, (ballance_so_far, ballance_this_day)) in ballance.iter().enumerate() {
 		let day = idx + 1;
 
-		print!("{day:2}: {ballance_so_far:7.2} [{ballance_this_day:6.2}]");
+		print!("{year:02}-{month:02}-{day:02}: {ballance_so_far:7.2} [{ballance_this_day:6.2}]");
 		if day == today.try_into().unwrap() {
 			println!(" <");
 		}else{
