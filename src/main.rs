@@ -14,6 +14,30 @@ struct Args {
     bills_toml: String,
 }
 
+///////////// vvvvv stupid fucking shit (this should have been included in the library) // https://github.com/chronotope/chrono/issues/69
+trait NaiveDateExt {
+    fn days_in_month(&self) -> i32;
+    fn is_leap_year(&self) -> bool;
+}
+
+impl NaiveDateExt for chrono::NaiveDate {
+    fn days_in_month(&self) -> i32 {
+        let month = self.month();
+        match month {
+            1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+            4 | 6 | 9 | 11 => 30,
+            2 => if self.is_leap_year() { 29 } else { 28 },
+            _ => panic!("Invalid month: {}" , month),
+        }
+    }
+
+    fn is_leap_year(&self) -> bool {
+        let year = self.year();
+        return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+    }
+}
+///////////// ^^^^^
+
 fn recursively_sum(value: Value) -> f64 {
 	match value{
 		Value::String(_) | Value::Boolean(_) | Value::Datetime(_) =>
@@ -52,9 +76,15 @@ fn main(){
 	let data = data.parse::<Table>()
 		.unwrap();
 
+	let date = chrono::offset::Local::now().date_naive();
+	let days_in_month: usize = date.days_in_month().try_into().unwrap();
+	// let year = date.year();
+	// let month = date.month();
+	let today = date.day();
+
 	let mut income: f64 = 0.0;
 	let mut expenditures_monthly: f64 = 0.0;
-	let mut expenditures = vec![0.0; 31];
+	let mut expenditures = vec![0.0_f64; days_in_month];
 
 	for item in data{
 		let (key, value) = item;
@@ -78,7 +108,7 @@ fn main(){
 							let day: usize = day.parse().expect(&format!("`{}` is not a valid month day", day));
 							let day = day - 1;
 							let money = recursively_sum(money);
-							expenditures[day] += money; // panic here if out of bound
+							expenditures[day] += money; // panics if out of bound
 						}
 					},
 
@@ -94,19 +124,41 @@ fn main(){
 
 	let income = income - expenditures_monthly;
 	let expenditures = expenditures;
+// 
+// 	println!();
+// 	println!("income: {income}");
+// 	println!("expenditures: {expenditures:?}");
 
-	println!();
-	println!("income: {income}");
-	println!("expenditures: {expenditures:?}");
+	// println!();
+	// for (idx, money) in expenditures.iter().enumerate() {
+	// 	let day = idx + 1;
+	// 	println!("{day}: {money}");
+	// }
 
-	println!();
-	for (idx, money) in expenditures.iter().enumerate() {
-		let day = idx + 1;
-		println!("{day}: {money}");
+	// println!();
+
+	let money_per_day = income / days_in_month as f64; // whatevert just use a cast // TODO see if we can do it the other way
+
+	let mut ballance = vec![0.0_f64; days_in_month];
+
+	let mut money_so_far = 0.0_f64;
+
+	for idx in 0..ballance.len(){
+		money_so_far += money_per_day;
+		money_so_far -= expenditures[idx];
+		ballance[idx] = money_so_far;
 	}
 
-	let today = chrono::offset::Local::now().date().year();
+	let ballance = ballance;
 
-	println!();
-	dbg!(today);
+	for (idx, money) in ballance.iter().enumerate() {
+		let day = idx + 1;
+
+		print!("{day:2}: {money:7.2}");
+		if day == today.try_into().unwrap() {
+			println!(" <");
+		}else{
+			println!();
+		}
+	}
 }
