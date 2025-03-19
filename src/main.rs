@@ -1,10 +1,13 @@
 
 use clap::Parser; // cargo add clap --features derive
-use toml::Table; // cargo add ‎toml
+use toml::Table; // cargo add toml
 use std::fs;
 use toml::Value;
 use chrono; // cargo add chrono
 use chrono::Datelike;
+use textplots::{Chart, Plot, Shape}; // cargo add textplots
+use textplots::ColorPlot;
+use rgb::RGB8; // cargo add rgb
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -151,6 +154,8 @@ fn main(){
 
 	let ballance = ballance;
 
+	///// print
+
 	println!("date: ballance_so_far [ballance_this_day]");
 
 	for (idx, (ballance_so_far, ballance_this_day)) in ballance.iter().enumerate() {
@@ -163,4 +168,46 @@ fn main(){
 			println!();
 		}
 	}
+
+	///// graph
+
+	println!();
+
+	let mut graph_ballance_till_today: Vec<(f32, f32)> = vec![];
+    let mut graph_ballance_after_today: Vec<(f32, f32)> = vec![];
+
+    let mut first = true;
+
+	for (idx, (ballance_so_far, _ballance_this_day)) in ballance.iter().enumerate() {
+        let day_usize: usize = idx + 1;
+		let day = day_usize as f32;
+
+        let ballance = *ballance_so_far as f32;
+
+		if day_usize <= today.try_into().unwrap() {
+			graph_ballance_till_today.push((day, ballance));
+		}else{
+            if first {
+                first = false;
+                graph_ballance_till_today.push((day, ballance));
+            }
+            graph_ballance_after_today.push((day, ballance));
+        }
+	}
+
+    Chart
+        ::new(450 /* term width */, 180 /* term height */, 1.0 /* start x */, days_in_month as f32 /* end x */)
+
+        .lineplot(&Shape::Bars(&graph_ballance_till_today)) // Lines Steps Bars
+
+        .linecolorplot(
+        	&Shape::Bars(&graph_ballance_after_today),
+        	RGB8 {
+        		r: 150,
+        		g: 0,
+        		b: 150,
+        	},
+        )
+
+        .nice(); // .display()
 }
