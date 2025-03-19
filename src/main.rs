@@ -70,17 +70,17 @@ fn recursively_sum(value: Value) -> f64 {
 fn main(){
 	let args = Args::parse();
 
-	let data = fs::read_to_string(args.bills_toml)
-		.unwrap();
-
-	let data = data.parse::<Table>()
-		.unwrap();
-
 	let date = chrono::offset::Local::now().date_naive();
 	let days_in_month: usize = date.days_in_month().try_into().unwrap();
 	// let year = date.year();
 	// let month = date.month();
 	let today = date.day();
+
+	let data = fs::read_to_string(args.bills_toml)
+		.unwrap();
+
+	let data = data.parse::<Table>()
+		.unwrap();
 
 	let mut income: f64 = 0.0;
 	let mut expenditures_monthly: f64 = 0.0;
@@ -139,23 +139,24 @@ fn main(){
 
 	let money_per_day = income / days_in_month as f64; // whatevert just use a cast // TODO see if we can do it the other way
 
-	let mut ballance = vec![0.0_f64; days_in_month];
+	let mut ballance = vec![(0.0_f64, 0.0_f64); days_in_month];
 
 	let mut money_so_far = 0.0_f64;
 
 	for idx in 0..ballance.len(){
-		money_so_far += money_per_day;
-		money_so_far -= expenditures[idx];
-		ballance[idx] = money_so_far;
+		let bal_this_day = money_per_day - expenditures[idx];
+		money_so_far += bal_this_day;
+		ballance[idx] = (money_so_far, bal_this_day);
 	}
 
 	let ballance = ballance;
 
-	for (idx, money_so_far) in ballance.iter().enumerate() {
-		let day = idx + 1;
-		let ballance_day = money_per_day - expenditures[idx];
+	println!("day_of_month: ballance_so_far [ballance_this_day]");
 
-		print!("{day:2}: {money_so_far:7.2} [{ballance_day:6.2}]");
+	for (idx, (ballance_so_far, ballance_this_day)) in ballance.iter().enumerate() {
+		let day = idx + 1;
+
+		print!("{day:2}: {ballance_so_far:7.2} [{ballance_this_day:6.2}]");
 		if day == today.try_into().unwrap() {
 			println!(" <");
 		}else{
