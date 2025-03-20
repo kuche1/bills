@@ -9,6 +9,9 @@ use textplots::{Chart, Plot, Shape}; // cargo add textplots
 use textplots::ColorPlot;
 use rgb::RGB8; // cargo add rgb
 
+const GRAPH_WIDTH: u32 = 300; // 450
+const GRAPH_HEIGHT: u32 = 180;
+
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
@@ -127,18 +130,6 @@ fn main(){
 
 	let income = income - expenditures_monthly;
 	let expenditures = expenditures;
-// 
-// 	println!();
-// 	println!("income: {income}");
-// 	println!("expenditures: {expenditures:?}");
-
-	// println!();
-	// for (idx, money) in expenditures.iter().enumerate() {
-	// 	let day = idx + 1;
-	// 	println!("{day}: {money}");
-	// }
-
-	// println!();
 
 	let money_per_day = income / days_in_month as f64; // whatevert just use a cast // TODO see if we can do it the other way
 
@@ -173,39 +164,73 @@ fn main(){
 
 	println!();
 
-	let mut graph_ballance_till_today: Vec<(f32, f32)> = vec![];
-    let mut graph_ballance_after_today: Vec<(f32, f32)> = vec![];
+	let mut graph_till_today: Vec<(f32, f32)> = vec![(0.0, 0.0)];
+    let mut graph_after_today_no_spend: Vec<(f32, f32)> = vec![];
+    let mut graph_after_today_avg_spend: Vec<(f32, f32)> = vec![];
+    let mut graph_after_today_no_income: Vec<(f32, f32)> = vec![];
 
-    let mut first = true;
+    let avg_spendings = {
+    	let mut total = 0.0_f64;
+    	for idx in 0..today { // including today
+    		total += expenditures[idx as usize];
+    	}
+    	total / today as f64
+    };
 
 	for (idx, (ballance_so_far, _ballance_this_day)) in ballance.iter().enumerate() {
         let day_usize: usize = idx + 1;
-		let day = day_usize as f32;
+		let day_f32 = day_usize as f32;
 
         let ballance = *ballance_so_far as f32;
 
 		if day_usize <= today.try_into().unwrap() {
-			graph_ballance_till_today.push((day, ballance));
+			graph_till_today.push((day_f32, ballance));
+
+			if day_usize == today.try_into().unwrap() {
+				graph_after_today_no_spend.push((day_f32, ballance));
+				graph_after_today_avg_spend.push((day_f32, ballance));
+				graph_after_today_no_income.push((day_f32, ballance));
+			}
+
 		}else{
-            if first {
-                first = false;
-                graph_ballance_till_today.push((day, ballance));
-            }
-            graph_ballance_after_today.push((day, ballance));
+            graph_after_today_no_spend.push((day_f32, ballance));
+
+            let num_day_after_today: f32 = day_f32 - today as f32;
+            graph_after_today_avg_spend.push((day_f32, ballance - num_day_after_today * avg_spendings as f32));
+
+            graph_after_today_no_income.push((day_f32, graph_after_today_no_income[0].1));
         }
 	}
 
     Chart
-        ::new(450 /* term width */, 180 /* term height */, 1.0 /* start x */, days_in_month as f32 /* end x */)
+        ::new(GRAPH_WIDTH, GRAPH_HEIGHT, 0.0 /* start x */, days_in_month as f32 /* end x */)
 
-        .lineplot(&Shape::Bars(&graph_ballance_till_today)) // Lines Steps Bars
+        .lineplot(&Shape::Bars(&graph_till_today)) // Lines Steps Bars
 
         .linecolorplot(
-        	&Shape::Bars(&graph_ballance_after_today),
+        	&Shape::Steps(&graph_after_today_no_spend),
         	RGB8 {
-        		r: 150,
-        		g: 0,
-        		b: 150,
+        		r: 40,
+        		g: 200,
+        		b: 40,
+        	},
+        )
+
+        .linecolorplot(
+        	&Shape::Steps(&graph_after_today_avg_spend),
+        	RGB8 {
+        		r: 20,
+        		g: 20,
+        		b: 200,
+        	},
+        )
+
+        .linecolorplot(
+        	&Shape::Steps(&graph_after_today_no_income),
+        	RGB8 {
+        		r: 200,
+        		g: 60,
+        		b: 60,
         	},
         )
 
