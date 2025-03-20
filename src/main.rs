@@ -171,6 +171,8 @@ fn main(){
     let mut graph_after_today_no_spend: Vec<(f32, f32)> = vec![];
     let mut graph_after_today_avg_spend: Vec<(f32, f32)> = vec![];
     let mut graph_after_today_no_income: Vec<(f32, f32)> = vec![];
+    // avg median
+    // avg of multiple median
 
     let avg_spendings = {
     	let mut total = 0.0_f64;
