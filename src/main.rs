@@ -10,6 +10,7 @@ use textplots::ColorPlot;
 use rgb::RGB8; // cargo add rgb
 use textplots::{LabelFormat, LabelBuilder};
 use textplots::{TickDisplay, TickDisplayBuilder};
+use textplots::{LineStyle, AxisBuilder};
 
 const GRAPH_WIDTH: u32 = 300; // 450
 const GRAPH_HEIGHT: u32 = 180;
@@ -220,6 +221,12 @@ fn main(){
 		// how often the money label appears
 		.y_tick_display(TickDisplay::Dense) // None Sparse Dense
 
+		// boundaries style, this actually sucks because those 2 fncs only cover the 2/4 boundaries
+		// .x_axis_style(LineStyle::Solid)
+		// .y_axis_style(LineStyle::Solid)
+
+		// draw
+
         .lineplot(&Shape::Bars(&graph_till_today)) // Lines Steps Bars
 
         .linecolorplot(
@@ -249,5 +256,6 @@ fn main(){
 			},
         )
 
-        .nice(); // .display()
+        .nice();
+        // .display();
 }
