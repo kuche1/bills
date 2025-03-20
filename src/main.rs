@@ -8,6 +8,8 @@ use chrono::Datelike;
 use textplots::{Chart, Plot, Shape}; // cargo add textplots
 use textplots::ColorPlot;
 use rgb::RGB8; // cargo add rgb
+use textplots::{LabelFormat, LabelBuilder};
+use textplots::{TickDisplay, TickDisplayBuilder};
 
 const GRAPH_WIDTH: u32 = 300; // 450
 const GRAPH_HEIGHT: u32 = 180;
@@ -205,33 +207,46 @@ fn main(){
     Chart
         ::new(GRAPH_WIDTH, GRAPH_HEIGHT, 0.0 /* start x */, days_in_month as f32 /* end x */)
 
+		// show days as `2` rather than `2.0`
+		.x_label_format(LabelFormat::Custom(Box::new(move |val| {
+			format!("{val}")
+		})))
+
+		// show monay as `12.34` rather than `12.3`
+		.y_label_format(LabelFormat::Custom(Box::new(move |val| {
+			format!("{val:.2}")
+		})))
+
+		// how often the money label appears
+		.y_tick_display(TickDisplay::Dense) // None Sparse Dense
+
         .lineplot(&Shape::Bars(&graph_till_today)) // Lines Steps Bars
 
         .linecolorplot(
         	&Shape::Steps(&graph_after_today_no_spend),
-        	RGB8 {
-        		r: 40,
-        		g: 200,
-        		b: 40,
-        	},
+			RGB8 {
+				r: 40,
+				g: 200,
+				b: 40,
+			},
         )
 
         .linecolorplot(
-        	&Shape::Steps(&graph_after_today_avg_spend),
-        	RGB8 {
-        		r: 20,
-        		g: 20,
-        		b: 200,
-        	},
+			&Shape::Steps(&graph_after_today_no_income),
+			RGB8 {
+				r: 200,
+				g: 60,
+				b: 60,
+			},
         )
 
         .linecolorplot(
-        	&Shape::Steps(&graph_after_today_no_income),
-        	RGB8 {
-        		r: 200,
-        		g: 60,
-        		b: 60,
-        	},
+			&Shape::Steps(&graph_after_today_avg_spend),
+			RGB8 {
+				r: 20,
+				g: 20,
+				b: 200,
+			},
         )
 
         .nice(); // .display()
