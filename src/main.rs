@@ -171,8 +171,7 @@ fn main(){
     let mut graph_after_today_no_spend: Vec<(f32, f32)> = vec![];
     let mut graph_after_today_avg_spend: Vec<(f32, f32)> = vec![];
     let mut graph_after_today_no_income: Vec<(f32, f32)> = vec![];
-    // avg median
-    // avg of multiple median
+    let mut graph_after_today_avg_median: Vec<(f32, f32)> = vec![];
 
     let avg_spendings = {
     	let mut total = 0.0_f64;
@@ -181,6 +180,22 @@ fn main(){
     	}
     	total / today as f64
     };
+    println!("avg_spendings={avg_spendings}");
+
+    let avg_median_spendings = {
+    	let mut spendings = expenditures.clone();
+    	spendings.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+		let items = spendings.len() / 4; // we want to keep hald the array
+		let start = items;
+		let end = spendings.len() - items;
+
+		spendings.drain(end..);
+		spendings.drain(..start);
+
+		spendings.iter().sum::<f64>() / spendings.len() as f64
+    };
+    println!("avg_median_spendings={avg_median_spendings}");
 
 	for (idx, (ballance_so_far, _ballance_this_day)) in ballance.iter().enumerate() {
         let day_usize: usize = idx + 1;
@@ -195,17 +210,28 @@ fn main(){
 				graph_after_today_no_spend.push((day_f32, ballance));
 				graph_after_today_avg_spend.push((day_f32, ballance));
 				graph_after_today_no_income.push((day_f32, ballance));
+				graph_after_today_avg_median.push((day_f32, ballance));
 			}
 
 		}else{
             graph_after_today_no_spend.push((day_f32, ballance));
 
-            let num_day_after_today: f32 = day_f32 - today as f32;
+			let num_day_after_today: f32 = day_f32 - today as f32;
+
             graph_after_today_avg_spend.push((day_f32, ballance - num_day_after_today * avg_spendings as f32));
 
             graph_after_today_no_income.push((day_f32, graph_after_today_no_income[0].1));
+
+			graph_after_today_avg_median.push((day_f32, ballance - num_day_after_today * avg_median_spendings as f32))
         }
 	}
+
+	println!();
+
+	println!("green:no-spend purple:avg-median blue:avg red:no-change");
+	// this fucking sucks
+	// I need to find the way to print based on this stupid `rgb`
+	// or I need to copy the relative functions from the draw create
 
     Chart
         ::new(GRAPH_WIDTH, GRAPH_HEIGHT, 0.0 /* start x */, days_in_month as f32 /* end x */)
@@ -232,7 +258,7 @@ fn main(){
         .lineplot(&Shape::Bars(&graph_till_today)) // Lines Steps Bars
 
         .linecolorplot(
-        	&Shape::Steps(&graph_after_today_no_spend),
+			&Shape::Lines(&graph_after_today_no_spend),
 			RGB8 {
 				r: 40,
 				g: 200,
@@ -241,7 +267,7 @@ fn main(){
         )
 
         .linecolorplot(
-			&Shape::Steps(&graph_after_today_no_income),
+			&Shape::Lines(&graph_after_today_no_income),
 			RGB8 {
 				r: 200,
 				g: 60,
@@ -250,10 +276,19 @@ fn main(){
         )
 
         .linecolorplot(
-			&Shape::Steps(&graph_after_today_avg_spend),
+			&Shape::Lines(&graph_after_today_avg_spend),
 			RGB8 {
 				r: 20,
 				g: 20,
+				b: 200,
+			},
+        )
+
+        .linecolorplot(
+			&Shape::Lines(&graph_after_today_avg_median),
+			RGB8 {
+				r: 200,
+				g: 100,
 				b: 200,
 			},
         )
