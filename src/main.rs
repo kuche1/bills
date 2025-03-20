@@ -221,7 +221,7 @@ fn main(){
 		// how often the money label appears
 		.y_tick_display(TickDisplay::Dense) // None Sparse Dense
 
-		// boundaries style, this actually sucks because those 2 fncs only cover the 2/4 boundaries
+		// boundaries style, this actually sucks because those 2 fncs only cover 2/4 boundaries
 		// .x_axis_style(LineStyle::Solid)
 		// .y_axis_style(LineStyle::Solid)
 
