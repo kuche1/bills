@@ -7,5 +7,6 @@ edition = "2024"
 chrono = "0.4.40"
 clap = { version = "4.5.32", features = ["derive"] }
 rgb = "0.8.50"
+term_size = "0.3.2"
 textplots = "0.8.7"
 toml = "0.8.20"

@@ -11,9 +11,7 @@ use rgb::RGB8; // cargo add rgb
 use textplots::{LabelFormat, LabelBuilder};
 use textplots::{TickDisplay, TickDisplayBuilder};
 use textplots::{LineStyle, AxisBuilder};
-
-const GRAPH_WIDTH: u32 = 300; // 450
-const GRAPH_HEIGHT: u32 = 180;
+use term_size; // cargo add term_size
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -180,7 +178,7 @@ fn main(){
     	}
     	total / today as f64
     };
-    println!("avg_spendings={avg_spendings}");
+    // println!("avg_spendings={avg_spendings}");
 
     let avg_median_spendings = {
     	let mut spendings = expenditures.clone();
@@ -195,7 +193,7 @@ fn main(){
 
 		spendings.iter().sum::<f64>() / spendings.len() as f64
     };
-    println!("avg_median_spendings={avg_median_spendings}");
+    // println!("avg_median_spendings={avg_median_spendings}");
 
 	for (idx, (ballance_so_far, _ballance_this_day)) in ballance.iter().enumerate() {
         let day_usize: usize = idx + 1;
@@ -228,13 +226,21 @@ fn main(){
 
 	println!();
 
+	let (term_width, term_height) = term_size::dimensions().unwrap();
+
+	let graph_width: u32 = term_width.try_into().unwrap();
+	let graph_height: u32 = term_height.try_into().unwrap();
+
+	let graph_width = graph_width * 10 / 6; // 300 // 450
+	let graph_height = graph_height * 10 / 3; // 180
+
 	println!("green:no-spend purple:avg-median blue:avg red:no-change");
 	// this fucking sucks
 	// I need to find the way to print based on this stupid `rgb`
 	// or I need to copy the relative functions from the draw create
 
     Chart
-        ::new(GRAPH_WIDTH, GRAPH_HEIGHT, 0.0 /* start x */, days_in_month as f32 /* end x */)
+        ::new(graph_width, graph_height, 0.0 /* start x */, days_in_month as f32 /* end x */)
 
 		// show days as `2` rather than `2.0`
 		.x_label_format(LabelFormat::Custom(Box::new(move |val| {
