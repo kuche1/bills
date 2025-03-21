@@ -134,17 +134,21 @@ fn main(){
 
 	let money_per_day = income / days_in_month as f64; // whatevert just use a cast // TODO see if we can do it the other way
 
-	let mut ballance = vec![(0.0_f64, 0.0_f64); days_in_month];
+	let ballance = {
 
-	let mut money_so_far = 0.0_f64;
+		let mut ballance = vec![(0.0_f64, 0.0_f64); days_in_month];
 
-	for idx in 0..ballance.len(){
-		let bal_this_day = money_per_day - expenditures[idx];
-		money_so_far += bal_this_day;
-		ballance[idx] = (money_so_far, bal_this_day);
-	}
+		let mut money_so_far = 0.0_f64;
 
-	let ballance = ballance;
+		for idx in 0..ballance.len(){
+			let bal_this_day = money_per_day - expenditures[idx];
+			money_so_far += bal_this_day;
+			ballance[idx] = (money_so_far, bal_this_day);
+		}
+
+		ballance
+
+	};
 
 	///// print
 
