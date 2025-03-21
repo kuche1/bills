@@ -147,7 +147,6 @@ fn main(){
 		}
 
 		ballance
-
 	};
 
 	///// print
