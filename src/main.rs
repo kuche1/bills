@@ -163,7 +163,7 @@ fn main(){
 
 	///// graph
 
-	println!();
+	// println!();
 
 	let mut graph_till_today: Vec<(f32, f32)> = vec![(0.0, 0.0)];
     let mut graph_after_today_no_spend: Vec<(f32, f32)> = vec![];
