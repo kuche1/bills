@@ -231,7 +231,7 @@ fn main(){
 	let graph_width: u32 = term_width.try_into().unwrap();
 	let graph_height: u32 = term_height.try_into().unwrap();
 
-	let graph_width = graph_width * 10 / 6; // 300 // 450
+	let graph_width = graph_width * 11 / 6; // 300 // 450
 	let graph_height = graph_height * 10 / 3; // 180
 
 	println!("green:no-spend purple:avg-median blue:avg red:no-change");
