@@ -23,9 +23,9 @@ struct Args {
 
 #[derive(Clone)]
 struct BallancePoint {
-	money_so_far: f64,
-	ballance_today_from_month_avg: f64,
-	ballance_today_from_money_so_far: f64,
+	money_so_far: f32,
+	ballance_today_from_month_avg: f32,
+	ballance_today_from_money_so_far: f32,
 }
 
 ///////////// vvvvv stupid fucking shit (this should have been included in the library) // https://github.com/chronotope/chrono/issues/69
@@ -52,19 +52,19 @@ impl NaiveDateExt for chrono::NaiveDate {
 }
 ///////////// ^^^^^
 
-fn recursively_sum(value: Value) -> f64 {
+fn recursively_sum(value: Value) -> f32 {
 	match value{
 		Value::String(_) | Value::Boolean(_) | Value::Datetime(_) =>
 			panic!("unsupported value: {value}"),
 
 		Value::Integer(v) =>
-			return v as f64,
+			return v as f32,
 
 		Value::Float(v) =>
-			return v,
+			return v as f32,
 
 		Value::Array(v) => {
-			let mut sum: f64 = 0.0;
+			let mut sum: f32 = 0.0;
 			for value in v{
 				sum += recursively_sum(value);
 			}
@@ -72,13 +72,37 @@ fn recursively_sum(value: Value) -> f64 {
 		},
 
 		Value::Table(v) => {
-			let mut sum: f64 = 0.0;
+			let mut sum: f32 = 0.0;
 			for (_key, value) in v{
 				sum += recursively_sum(value);
 			}
 			return sum;
 		},
 	}
+}
+
+fn exterpolate_avg(data: Vec<f32>, new_entries: u32) -> Vec<f32> {
+	let mut deltas: Vec<f32> = vec![];
+
+	for idx in 1 .. data.len() {
+		let last = data[idx];
+		let cur = data[idx+1];
+		deltas.push(cur - last);
+	}
+
+	let mut sum: f32 = 0.0;
+	for item in &deltas {
+		sum += item;
+	}
+	let avg = sum / deltas.len() as f32;
+
+	let mut exterpolated: Vec<f32> = vec![*data.last().unwrap()];
+	for _ in 0..new_entries {
+		let last = *exterpolated.last().unwrap();
+		exterpolated.push(last + avg);
+	}
+
+	return exterpolated;
 }
 
 fn main(){
@@ -106,9 +130,9 @@ fn main(){
 
 	let (income, expenditures) = {
 
-		let mut income: f64 = 0.0;
-		let mut expenditures_monthly: f64 = 0.0;
-		let mut expenditures = vec![0.0_f64; days_in_month];
+		let mut income: f32 = 0.0;
+		let mut expenditures_monthly: f32 = 0.0;
+		let mut expenditures = vec![0.0_f32; days_in_month];
 
 		for item in data{
 			let (key, value) = item;
@@ -153,24 +177,24 @@ fn main(){
 
 	// calculate ballane
 
-	let money_per_day = income / days_in_month as f64;
+	let money_per_day = income / days_in_month as f32;
 
 	let ballance = {
 
 		let mut ballance =
 			vec![
 				BallancePoint {
-					money_so_far: 0.0_f64,
-					ballance_today_from_month_avg: 0.0_f64,
-					ballance_today_from_money_so_far: 0.0_f64,
+					money_so_far: 0.0,
+					ballance_today_from_month_avg: 0.0,
+					ballance_today_from_money_so_far: 0.0,
 				};
 				days_in_month
 			];
 
-		let mut money_so_far = 0.0_f64;
+		let mut money_so_far: f32 = 0.0;
 
 		for idx in 0..ballance.len(){
-			let days_left_in_month = (ballance.len() - idx) as f64;
+			let days_left_in_month = (ballance.len() - idx) as f32;
 
 			let money_today_from_month_avg = money_per_day - expenditures[idx];
 
@@ -221,11 +245,11 @@ fn main(){
     let mut graph_after_today_avg_median: Vec<(f32, f32)> = vec![];
 
     let avg_spendings = {
-    	let mut total = 0.0_f64;
+    	let mut total = 0.0_f32;
     	for idx in 0..today { // including today
     		total += expenditures[idx as usize];
     	}
-    	total / today as f64
+    	total / today as f32
     };
     // println!("avg_spendings={avg_spendings}");
 
@@ -240,7 +264,7 @@ fn main(){
 		spendings.drain(end..);
 		spendings.drain(..start);
 
-		spendings.iter().sum::<f64>() / spendings.len() as f64
+		spendings.iter().sum::<f32>() / spendings.len() as f32
     };
     // println!("avg_median_spendings={avg_median_spendings}");
 
@@ -248,7 +272,7 @@ fn main(){
         let day_usize: usize = idx + 1;
 		let day_f32 = day_usize as f32;
 
-		let money_so_far: f32 = bal.money_so_far as f32;
+		let money_so_far = bal.money_so_far as f32;
 
 		graph_dynamic_ballance.push((day_f32, bal.ballance_today_from_money_so_far as f32));
 
@@ -271,7 +295,7 @@ fn main(){
 
             graph_after_today_no_income.push((day_f32, graph_after_today_no_income[0].1));
 
-			graph_after_today_avg_median.push((day_f32, money_so_far - num_day_after_today * avg_median_spendings as f32))
+			graph_after_today_avg_median.push((day_f32, money_so_far - num_day_after_today * avg_median_spendings))
         }
 	}
 
