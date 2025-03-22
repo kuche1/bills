@@ -126,11 +126,6 @@ fn exterpolate_avg(data: &Vec<f32>, new_entries: usize) -> Vec<f32> {
 	return exterpolated;
 }
 
-// // assumes no change since last item
-// fn exterpolate_same_as_last(data: &Vec<f32>, new_entries: usize) -> Vec<f32> {
-// 	vec![*data.last().unwrap(); new_entries + 1]
-// }
-
 // removes most extreme deltas then calculates average
 fn exterpolate_median_avg(data: &Vec<f32>, new_entries: usize) -> Vec<f32> {
 	let mut deltas: Vec<f32> = vec![];
