@@ -318,7 +318,6 @@ fn main(){
 
 	let (
 		graph_after_today_avg_spend,
-		// graph_after_today_no_income,
 		graph_after_today_avg_median,
 		graph_after_today_no_spend,
 	) = {
@@ -335,10 +334,6 @@ fn main(){
 				exterpolate_avg(&data, days_left),
 				today as f32
 			),
-			// exterpolated_data_to_graph_data(
-			// 	exterpolate_same_as_last(&data, days_left),
-			// 	today as f32
-			// ),
 			exterpolated_data_to_graph_data(
 				exterpolate_median_avg(&data, days_left),
 				today as f32
@@ -393,10 +388,6 @@ fn main(){
 		// how often the money label appears
 		.y_tick_display(TickDisplay::Dense) // None Sparse Dense
 
-		// boundaries style, this actually sucks because those 2 fncs only cover 2/4 boundaries
-		// .x_axis_style(LineStyle::Solid)
-		// .y_axis_style(LineStyle::Solid)
-
 		// draw
 
         .lineplot(&Shape::Bars(&graph_till_today)) // Lines Steps Bars
@@ -413,15 +404,6 @@ fn main(){
 				b: 40,
 			},
         )
-
-        // .linecolorplot(
-		// 	&Shape::Lines(&graph_after_today_no_income),
-		// 	RGB8 {
-		// 		r: 200,
-		// 		g: 60,
-		// 		b: 60,
-		// 	},
-        // )
 
         .linecolorplot(
 			&Shape::Lines(&graph_after_today_avg_spend),
