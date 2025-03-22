@@ -180,6 +180,8 @@ fn main(){
 	let month = date.month();
 	let today = date.day();
 
+	let today_usize: usize = today.try_into().unwrap();
+
 	// read file
 
 	let data = fs::read_to_string(args.bills_toml)
@@ -286,7 +288,7 @@ fn main(){
 		let ballance_today_from_money_so_far = bal.ballance_today_from_money_so_far;
 
 		print!("{year:02}-{month:02}-{day:02}: {money_so_far:7.2} [{ballance_today_from_month_avg:6.2}] [{ballance_today_from_money_so_far:6.2}]");
-		if day == today.try_into().unwrap() {
+		if day == today_usize {
 			println!(" <");
 		}else{
 			println!();
@@ -295,8 +297,10 @@ fn main(){
 
 	///// graph
 
-	let mut graph_dynamic_ballance: Vec<(f32, f32)> = vec![(0.0, 0.0)];
 	let mut graph_till_today: Vec<(f32, f32)> = vec![(0.0, 0.0)];
+	let mut graph_till_today_dynamic_ballance: Vec<(f32, f32)> = vec![(0.0, 0.0)];
+
+	let mut graph_after_today_dynamic_ballance_no_spend = vec![];
 
 	for (idx, bal) in ballance.iter().enumerate() {
         let day_usize: usize = idx + 1;
@@ -304,10 +308,15 @@ fn main(){
 
 		let money_so_far = bal.money_so_far as f32;
 
-		graph_dynamic_ballance.push((day_f32, bal.ballance_today_from_money_so_far as f32));
-
-		if day_usize <= today.try_into().unwrap() {
+		if day_usize < today_usize {
 			graph_till_today.push((day_f32, money_so_far));
+			graph_till_today_dynamic_ballance.push((day_f32, bal.ballance_today_from_money_so_far as f32));
+		}else{
+			if day_usize == today_usize {
+				graph_till_today.push((day_f32, money_so_far));
+				graph_till_today_dynamic_ballance.push((day_f32, bal.ballance_today_from_money_so_far as f32));
+			}
+			graph_after_today_dynamic_ballance_no_spend.push((day_f32, bal.ballance_today_from_money_so_far as f32));
 		}
 	}
 
@@ -347,8 +356,8 @@ fn main(){
 	};
 
 	let mark_dynamic_money_left_today = {
-		let now = graph_dynamic_ballance[today as usize];
-		let end = (days_in_month as f32, graph_dynamic_ballance[today as usize].1);
+		let now = *graph_till_today_dynamic_ballance.last().unwrap();
+		let end = (days_in_month as f32, graph_till_today_dynamic_ballance.last().unwrap().1);
 		vec![now, end]
 	};
 
@@ -388,8 +397,10 @@ fn main(){
         .lineplot(&Shape::Bars(&graph_till_today)) // Lines Steps Bars
 		.lineplot(&Shape::Lines(&mark_ballance))
 
-		.lineplot(&Shape::Lines(&graph_dynamic_ballance))
+		.lineplot(&Shape::Lines(&graph_till_today_dynamic_ballance))
 		.lineplot(&Shape::Lines(&mark_dynamic_money_left_today))
+
+		// green
 
         .linecolorplot(
 			&Shape::Lines(&graph_after_today_no_spend),
@@ -400,6 +411,17 @@ fn main(){
 			},
         )
 
+		.linecolorplot(
+			&Shape::Lines(&graph_after_today_dynamic_ballance_no_spend),
+			RGB8 {
+				r: 40,
+				g: 200,
+				b: 40,
+			},
+        )
+
+		// blue
+
         .linecolorplot(
 			&Shape::Lines(&graph_after_today_avg_spend),
 			RGB8 {
@@ -408,6 +430,8 @@ fn main(){
 				b: 200,
 			},
         )
+
+		// purple
 
         .linecolorplot(
 			&Shape::Lines(&graph_after_today_avg_median),
