@@ -81,12 +81,28 @@ fn recursively_sum(value: Value) -> f32 {
 	}
 }
 
-fn exterpolate_avg(data: Vec<f32>, new_entries: u32) -> Vec<f32> {
+//////
+////// exterpolations
+//////
+
+fn exterpolated_data_to_graph_data(data: Vec<f32>, today: f32) -> Vec<(f32, f32)> {
+	data
+		.iter()
+		.enumerate()
+		.map(
+			|(idx, val)|
+				(today + idx as f32, *val)
+		)
+		.collect()
+}
+
+// calculated average change
+fn exterpolate_avg(data: &Vec<f32>, new_entries: usize) -> Vec<f32> {
 	let mut deltas: Vec<f32> = vec![];
 
 	for idx in 1 .. data.len() {
-		let last = data[idx];
-		let cur = data[idx+1];
+		let last = data[idx - 1];
+		let cur = data[idx];
 		deltas.push(cur - last);
 	}
 
@@ -95,6 +111,7 @@ fn exterpolate_avg(data: Vec<f32>, new_entries: u32) -> Vec<f32> {
 		sum += item;
 	}
 	let avg = sum / deltas.len() as f32;
+	// TODO use the sum fnc
 
 	let mut exterpolated: Vec<f32> = vec![*data.last().unwrap()];
 	for _ in 0..new_entries {
@@ -104,6 +121,52 @@ fn exterpolate_avg(data: Vec<f32>, new_entries: u32) -> Vec<f32> {
 
 	return exterpolated;
 }
+
+// assumes no change since last item
+fn exterpolate_same_as_last(data: &Vec<f32>, new_entries: usize) -> Vec<f32> {
+	vec![*data.last().unwrap(); new_entries + 1]
+}
+
+// removes most extreme deltas then calculates average
+fn exterpolate_median_avg(data: &Vec<f32>, new_entries: usize) -> Vec<f32> {
+	let mut deltas: Vec<f32> = vec![];
+
+	for idx in 1 .. data.len() {
+		let last = data[idx - 1];
+		let cur = data[idx];
+		deltas.push(cur - last);
+	}
+
+	deltas.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+	let items = deltas.len() / 4; // we'll remove 1/4 of the beginning of the array, and 1/4 of the end
+	let start = items;
+	let end = deltas.len() - items;
+
+	deltas.drain(end..);
+	deltas.drain(..start);
+	
+	let median_avg_delta = deltas.iter().sum::<f32>() / deltas.len() as f32;
+
+	let mut exterpolated: Vec<f32> = vec![*data.last().unwrap()];
+	for _ in 0..new_entries {
+		let last = *exterpolated.last().unwrap();
+		exterpolated.push(last + median_avg_delta);
+	}
+
+	return exterpolated;
+}
+
+fn exterpolate_no_spend(ballance: &Vec<BallancePoint>, today: usize) -> Vec<f32> {
+	ballance[today - 1 ..]
+	.iter()
+	.map(|bal| bal.money_so_far)
+	.collect()
+}
+
+//////
+////// main
+//////
 
 fn main(){
 	// parse cmdline
@@ -233,40 +296,9 @@ fn main(){
 
 	///// graph
 
-	// println!();
-
 	let mut graph_dynamic_ballance: Vec<(f32, f32)> = vec![(0.0, 0.0)];
 
 	let mut graph_till_today: Vec<(f32, f32)> = vec![(0.0, 0.0)];
-
-    let mut graph_after_today_no_spend: Vec<(f32, f32)> = vec![];
-    let mut graph_after_today_avg_spend: Vec<(f32, f32)> = vec![];
-    let mut graph_after_today_no_income: Vec<(f32, f32)> = vec![];
-    let mut graph_after_today_avg_median: Vec<(f32, f32)> = vec![];
-
-    let avg_spendings = {
-    	let mut total = 0.0_f32;
-    	for idx in 0..today { // including today
-    		total += expenditures[idx as usize];
-    	}
-    	total / today as f32
-    };
-    // println!("avg_spendings={avg_spendings}");
-
-    let avg_median_spendings = {
-    	let mut spendings = expenditures.clone();
-    	spendings.sort_by(|a, b| a.partial_cmp(b).unwrap());
-
-		let items = spendings.len() / 4; // we want to keep hald the array
-		let start = items;
-		let end = spendings.len() - items;
-
-		spendings.drain(end..);
-		spendings.drain(..start);
-
-		spendings.iter().sum::<f32>() / spendings.len() as f32
-    };
-    // println!("avg_median_spendings={avg_median_spendings}");
 
 	for (idx, bal) in ballance.iter().enumerate() {
         let day_usize: usize = idx + 1;
@@ -278,26 +310,42 @@ fn main(){
 
 		if day_usize <= today.try_into().unwrap() {
 			graph_till_today.push((day_f32, money_so_far));
-
-			if day_usize == today.try_into().unwrap() {
-				graph_after_today_no_spend.push((day_f32, money_so_far));
-				graph_after_today_avg_spend.push((day_f32, money_so_far));
-				graph_after_today_no_income.push((day_f32, money_so_far));
-				graph_after_today_avg_median.push((day_f32, money_so_far));
-			}
-
-		}else{
-            graph_after_today_no_spend.push((day_f32, money_so_far));
-
-			let num_day_after_today: f32 = day_f32 - today as f32;
-
-            graph_after_today_avg_spend.push((day_f32, money_so_far - num_day_after_today * avg_spendings as f32));
-
-            graph_after_today_no_income.push((day_f32, graph_after_today_no_income[0].1));
-
-			graph_after_today_avg_median.push((day_f32, money_so_far - num_day_after_today * avg_median_spendings))
-        }
+		}
 	}
+
+	let (
+		graph_after_today_avg_spend,
+		graph_after_today_no_income,
+		graph_after_today_avg_median,
+		graph_after_today_no_spend,
+	) = {
+		let data = 
+			ballance[.. today as usize]
+			.iter()
+			.map(|bal| bal.money_so_far)
+			.collect();
+
+		let days_left = days_in_month - today as usize;
+
+		(
+			exterpolated_data_to_graph_data(
+				exterpolate_avg(&data, days_left),
+				today as f32
+			),
+			exterpolated_data_to_graph_data(
+				exterpolate_same_as_last(&data, days_left),
+				today as f32
+			),
+			exterpolated_data_to_graph_data(
+				exterpolate_median_avg(&data, days_left),
+				today as f32
+			),
+			exterpolated_data_to_graph_data(
+				exterpolate_no_spend(&ballance, today as usize),
+				today as f32
+			),
+		)
+	};
 
 	println!();
 
