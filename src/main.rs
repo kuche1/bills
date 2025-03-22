@@ -10,7 +10,7 @@ use textplots::ColorPlot;
 use rgb::RGB8; // cargo add rgb
 use textplots::{LabelFormat, LabelBuilder};
 use textplots::{TickDisplay, TickDisplayBuilder};
-use textplots::{LineStyle, AxisBuilder};
+// use textplots::{LineStyle, AxisBuilder};
 use term_size; // cargo add term_size
 
 #[derive(Parser, Debug)]
@@ -89,48 +89,52 @@ fn main(){
 	let data = data.parse::<Table>()
 		.unwrap();
 
-	let mut income: f64 = 0.0;
-	let mut expenditures_monthly: f64 = 0.0;
-	let mut expenditures = vec![0.0_f64; days_in_month];
+	let (income, expenditures) = {
 
-	for item in data{
-		let (key, value) = item;
-		// println!("{key} = {value}");
+		let mut income: f64 = 0.0;
+		let mut expenditures_monthly: f64 = 0.0;
+		let mut expenditures = vec![0.0_f64; days_in_month];
 
-		match key.as_str(){
-			"INCOME" =>
-				income += recursively_sum(value),
+		for item in data{
+			let (key, value) = item;
+			// println!("{key} = {value}");
 
-			"EXPENDITURES-MONTHLY" =>
-				expenditures_monthly += recursively_sum(value),
+			match key.as_str(){
+				"INCOME" =>
+					income += recursively_sum(value),
 
-			"EXPENDITURES-REGULAR" => {
+				"EXPENDITURES-MONTHLY" =>
+					expenditures_monthly += recursively_sum(value),
 
-				match value{
-					Value::String(_) | Value::Boolean(_) | Value::Datetime(_) | Value::Integer(_) | Value::Float(_) | Value::Array(_) =>
-						panic!("unsupported value: {value}"),
+				"EXPENDITURES-REGULAR" => {
 
-					Value::Table(v) => {
-						for (day, money) in v{
-							let day: usize = day.parse().expect(&format!("`{}` is not a valid month day", day));
-							let day = day - 1;
-							let money = recursively_sum(money);
-							expenditures[day] += money; // panics if out of bound
-						}
-					},
+					match value{
+						Value::String(_) | Value::Boolean(_) | Value::Datetime(_) | Value::Integer(_) | Value::Float(_) | Value::Array(_) =>
+							panic!("unsupported value: {value}"),
 
-					// _ => todo!("exp-reg"),
-				}
+						Value::Table(v) => {
+							for (day, money) in v{
+								let day: usize = day.parse().expect(&format!("`{}` is not a valid month day", day));
+								let day = day - 1;
+								let money = recursively_sum(money);
+								expenditures[day] += money; // panics if out of bound
+							}
+						},
 
-			},
+						// _ => todo!("exp-reg"),
+					}
 
-			_ =>
-				panic!("unknown key: {key}"),
+				},
+
+				_ =>
+					panic!("unknown key: {key}"),
+			}
 		}
-	}
 
-	let income = income - expenditures_monthly;
-	let expenditures = expenditures;
+		income -= expenditures_monthly;
+
+		(income, expenditures)
+	};
 
 	let money_per_day = income / days_in_month as f64; // whatevert just use a cast // TODO see if we can do it the other way
 
