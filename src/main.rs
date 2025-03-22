@@ -287,7 +287,7 @@ fn main(){
 		let ballance_today_from_month_avg = bal.ballance_today_from_month_avg;
 		let ballance_today_from_money_so_far = bal.ballance_today_from_money_so_far;
 
-		print!("{year:02}-{month:02}-{day:02}: {money_so_far:7.2} [{ballance_today_from_month_avg:6.2}] [{ballance_today_from_money_so_far:6.2}]");
+		print!("{year:02}-{month:02}-{day:02}: {money_so_far:7.2} [{ballance_today_from_month_avg:7.2}] [{ballance_today_from_money_so_far:7.2}]");
 		if day == today_usize {
 			println!(" <");
 		}else{
@@ -326,12 +326,12 @@ fn main(){
 		graph_after_today_no_spend,
 	) = {
 		let data = 
-			ballance[.. today as usize]
+			ballance[.. today_usize]
 			.iter()
 			.map(|bal| bal.money_so_far)
 			.collect();
 
-		let days_left = days_in_month - today as usize;
+		let days_left = days_in_month - today_usize;
 
 		(
 			exterpolated_data_to_graph_data(
@@ -343,7 +343,7 @@ fn main(){
 				today as f32
 			),
 			exterpolated_data_to_graph_data(
-				exterpolate_no_spend(&ballance, today as usize),
+				exterpolate_no_spend(&ballance, today_usize),
 				today as f32
 			),
 		)
