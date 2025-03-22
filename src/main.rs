@@ -126,10 +126,10 @@ fn exterpolate_avg(data: &Vec<f32>, new_entries: usize) -> Vec<f32> {
 	return exterpolated;
 }
 
-// assumes no change since last item
-fn exterpolate_same_as_last(data: &Vec<f32>, new_entries: usize) -> Vec<f32> {
-	vec![*data.last().unwrap(); new_entries + 1]
-}
+// // assumes no change since last item
+// fn exterpolate_same_as_last(data: &Vec<f32>, new_entries: usize) -> Vec<f32> {
+// 	vec![*data.last().unwrap(); new_entries + 1]
+// }
 
 // removes most extreme deltas then calculates average
 fn exterpolate_median_avg(data: &Vec<f32>, new_entries: usize) -> Vec<f32> {
@@ -300,9 +300,8 @@ fn main(){
 
 	///// graph
 
-	let mut graph_dynamic_ballance: Vec<(f32, f32)> = vec![(0.0, 0.0)];
-
 	let mut graph_till_today: Vec<(f32, f32)> = vec![(0.0, 0.0)];
+	let mut graph_dynamic_ballance: Vec<(f32, f32)> = vec![(0.0, 0.0)];
 
 	for (idx, bal) in ballance.iter().enumerate() {
         let day_usize: usize = idx + 1;
@@ -319,7 +318,7 @@ fn main(){
 
 	let (
 		graph_after_today_avg_spend,
-		graph_after_today_no_income,
+		// graph_after_today_no_income,
 		graph_after_today_avg_median,
 		graph_after_today_no_spend,
 	) = {
@@ -336,10 +335,10 @@ fn main(){
 				exterpolate_avg(&data, days_left),
 				today as f32
 			),
-			exterpolated_data_to_graph_data(
-				exterpolate_same_as_last(&data, days_left),
-				today as f32
-			),
+			// exterpolated_data_to_graph_data(
+			// 	exterpolate_same_as_last(&data, days_left),
+			// 	today as f32
+			// ),
 			exterpolated_data_to_graph_data(
 				exterpolate_median_avg(&data, days_left),
 				today as f32
@@ -349,6 +348,18 @@ fn main(){
 				today as f32
 			),
 		)
+	};
+
+	let mark_ballance = {
+		let now = *graph_till_today.last().unwrap();
+		let end = (days_in_month as f32, graph_till_today.last().unwrap().1);
+		vec![now, end]
+	};
+
+	let mark_dynamic_money_left_today = {
+		let now = graph_dynamic_ballance[today as usize];
+		let end = (days_in_month as f32, graph_dynamic_ballance[today as usize].1);
+		vec![now, end]
 	};
 
 	println!();
@@ -361,7 +372,7 @@ fn main(){
 	let graph_width = graph_width * 11 / 6; // I'm happy with this, this seem to be consistent with all zoom levels (except maybe the most extreme zoom-in)
 	let graph_height = graph_height * 10 / 3; // 180
 
-	println!("green:no-spend purple:avg-median blue:avg red:no-change");
+	println!("green:no-spend purple:avg-median blue:avg"); // red:no-change
 	// this fucking sucks
 	// I need to find the way to print based on this stupid `rgb`
 	// or I need to copy the relative functions from the draw create
@@ -388,9 +399,11 @@ fn main(){
 
 		// draw
 
-		.lineplot(&Shape::Lines(&graph_dynamic_ballance))
-
         .lineplot(&Shape::Bars(&graph_till_today)) // Lines Steps Bars
+		.lineplot(&Shape::Lines(&mark_ballance))
+
+		.lineplot(&Shape::Lines(&graph_dynamic_ballance))
+		.lineplot(&Shape::Lines(&mark_dynamic_money_left_today))
 
         .linecolorplot(
 			&Shape::Lines(&graph_after_today_no_spend),
@@ -401,14 +414,14 @@ fn main(){
 			},
         )
 
-        .linecolorplot(
-			&Shape::Lines(&graph_after_today_no_income),
-			RGB8 {
-				r: 200,
-				g: 60,
-				b: 60,
-			},
-        )
+        // .linecolorplot(
+		// 	&Shape::Lines(&graph_after_today_no_income),
+		// 	RGB8 {
+		// 		r: 200,
+		// 		g: 60,
+		// 		b: 60,
+		// 	},
+        // )
 
         .linecolorplot(
 			&Shape::Lines(&graph_after_today_avg_spend),
