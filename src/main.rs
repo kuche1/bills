@@ -295,8 +295,8 @@ fn main(){
 
 	///// graph
 
-	let mut graph_till_today: Vec<(f32, f32)> = vec![(0.0, 0.0)];
 	let mut graph_dynamic_ballance: Vec<(f32, f32)> = vec![(0.0, 0.0)];
+	let mut graph_till_today: Vec<(f32, f32)> = vec![(0.0, 0.0)];
 
 	for (idx, bal) in ballance.iter().enumerate() {
         let day_usize: usize = idx + 1;
