@@ -211,7 +211,10 @@ fn main(){
 
 	// println!();
 
+	let mut graph_dynamic_ballance: Vec<(f32, f32)> = vec![(0.0, 0.0)];
+
 	let mut graph_till_today: Vec<(f32, f32)> = vec![(0.0, 0.0)];
+
     let mut graph_after_today_no_spend: Vec<(f32, f32)> = vec![];
     let mut graph_after_today_avg_spend: Vec<(f32, f32)> = vec![];
     let mut graph_after_today_no_income: Vec<(f32, f32)> = vec![];
@@ -246,6 +249,8 @@ fn main(){
 		let day_f32 = day_usize as f32;
 
 		let money_so_far: f32 = bal.money_so_far as f32;
+
+		graph_dynamic_ballance.push((day_f32, bal.ballance_today_from_money_so_far as f32));
 
 		if day_usize <= today.try_into().unwrap() {
 			graph_till_today.push((day_f32, money_so_far));
@@ -306,6 +311,8 @@ fn main(){
 		// .y_axis_style(LineStyle::Solid)
 
 		// draw
+
+		.lineplot(&Shape::Lines(&graph_dynamic_ballance))
 
         .lineplot(&Shape::Bars(&graph_till_today)) // Lines Steps Bars
 
