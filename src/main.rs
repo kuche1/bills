@@ -25,7 +25,7 @@ struct Args {
 struct BallancePoint {
 	money_so_far: f64,
 	ballance_today_from_month_avg: f64,
-	// TODO ballance_today_from_today: f64,
+	ballance_today_from_money_so_far: f64,
 }
 
 ///////////// vvvvv stupid fucking shit (this should have been included in the library) // https://github.com/chronotope/chrono/issues/69
@@ -162,6 +162,7 @@ fn main(){
 				BallancePoint {
 					money_so_far: 0.0_f64,
 					ballance_today_from_month_avg: 0.0_f64,
+					ballance_today_from_money_so_far: 0.0_f64,
 				};
 				days_in_month
 			];
@@ -169,14 +170,19 @@ fn main(){
 		let mut money_so_far = 0.0_f64;
 
 		for idx in 0..ballance.len(){
+			let days_left_in_month = (ballance.len() - idx) as f64;
 
-			let money_this_day_from_month_avg = money_per_day - expenditures[idx];
-			money_so_far += money_this_day_from_month_avg;
+			let money_today_from_month_avg = money_per_day - expenditures[idx];
+
+			let money_today_from_money_so_far = money_today_from_month_avg + (money_so_far / days_left_in_month);
+
+			money_so_far += money_today_from_month_avg;
 
 			ballance[idx] =
 				BallancePoint {
 					money_so_far: money_so_far,
-					ballance_today_from_month_avg: money_this_day_from_month_avg,
+					ballance_today_from_month_avg: money_today_from_month_avg,
+					ballance_today_from_money_so_far: money_today_from_money_so_far,
 				};
 		}
 
@@ -185,14 +191,15 @@ fn main(){
 
 	///// print
 
-	println!("date: ballance_so_far [ballance_this_day]");
+	println!("date: ballance_so_far [ballance_today_from_month_avg] [ballance_today_from_money_so_far]");
 
 	for (idx, bal) in ballance.iter().enumerate() {
 		let day = idx + 1;
 		let money_so_far = bal.money_so_far;
 		let ballance_today_from_month_avg = bal.ballance_today_from_month_avg;
+		let ballance_today_from_money_so_far = bal.ballance_today_from_money_so_far;
 
-		print!("{year:02}-{month:02}-{day:02}: {money_so_far:7.2} [{ballance_today_from_month_avg:6.2}]");
+		print!("{year:02}-{month:02}-{day:02}: {money_so_far:7.2} [{ballance_today_from_month_avg:6.2}] [{ballance_today_from_money_so_far:6.2}]");
 		if day == today.try_into().unwrap() {
 			println!(" <");
 		}else{
