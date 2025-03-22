@@ -301,9 +301,9 @@ fn main(){
 	///// graph
 
 	let mut graph_till_today: Vec<(f32, f32)> = vec![(0.0, 0.0)];
-	let mut graph_till_today_dynamic_ballance: Vec<(f32, f32)> = vec![(0.0, 0.0)];
+	let mut graph_till_today_dynamic_daily_money: Vec<(f32, f32)> = vec![(0.0, 0.0)];
 
-	let mut graph_after_today_dynamic_ballance_no_spend = vec![];
+	let mut graph_after_today_dynamic_daily_money_no_spend = vec![];
 
 	for (idx, bal) in ballance.iter().enumerate() {
         let day_usize: usize = idx + 1;
@@ -313,13 +313,13 @@ fn main(){
 
 		if day_usize < today_usize {
 			graph_till_today.push((day_f32, money_so_far));
-			graph_till_today_dynamic_ballance.push((day_f32, bal.ballance_today_from_money_so_far));
+			graph_till_today_dynamic_daily_money.push((day_f32, bal.ballance_today_from_money_so_far));
 		}else{
 			if day_usize == today_usize {
 				graph_till_today.push((day_f32, money_so_far));
-				graph_till_today_dynamic_ballance.push((day_f32, bal.ballance_today_from_money_so_far));
+				graph_till_today_dynamic_daily_money.push((day_f32, bal.ballance_today_from_money_so_far));
 			}
-			graph_after_today_dynamic_ballance_no_spend.push((day_f32, bal.ballance_today_from_money_so_far));
+			graph_after_today_dynamic_daily_money_no_spend.push((day_f32, bal.ballance_today_from_money_so_far));
 		}
 	}
 
@@ -358,9 +358,9 @@ fn main(){
 		vec![now, end]
 	};
 
-	let mark_dynamic_money_left_today = {
-		let now = *graph_till_today_dynamic_ballance.last().unwrap();
-		let end = (days_in_month as f32, graph_till_today_dynamic_ballance.last().unwrap().1);
+	let mark_dynamic_daily_money = {
+		let now = *graph_till_today_dynamic_daily_money.last().unwrap();
+		let end = (days_in_month as f32, graph_till_today_dynamic_daily_money.last().unwrap().1);
 		vec![now, end]
 	};
 
@@ -400,8 +400,8 @@ fn main(){
         .lineplot(&Shape::Bars(&graph_till_today)) // Lines Steps Bars
 		.lineplot(&Shape::Lines(&mark_ballance))
 
-		.lineplot(&Shape::Lines(&graph_till_today_dynamic_ballance))
-		.lineplot(&Shape::Lines(&mark_dynamic_money_left_today))
+		.lineplot(&Shape::Lines(&graph_till_today_dynamic_daily_money))
+		.lineplot(&Shape::Lines(&mark_dynamic_daily_money))
 
 		// green
 
@@ -415,7 +415,7 @@ fn main(){
         )
 
 		.linecolorplot(
-			&Shape::Lines(&graph_after_today_dynamic_ballance_no_spend),
+			&Shape::Lines(&graph_after_today_dynamic_daily_money_no_spend),
 			RGB8 {
 				r: 40,
 				g: 200,
