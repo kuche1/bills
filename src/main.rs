@@ -21,6 +21,13 @@ struct Args {
     bills_toml: String,
 }
 
+#[derive(Clone)]
+struct BallancePoint {
+	money_so_far: f64,
+	ballance_today_from_month_avg: f64,
+	// TODO ballance_today_from_today: f64,
+}
+
 ///////////// vvvvv stupid fucking shit (this should have been included in the library) // https://github.com/chronotope/chrono/issues/69
 trait NaiveDateExt {
     fn days_in_month(&self) -> i32;
@@ -75,7 +82,11 @@ fn recursively_sum(value: Value) -> f64 {
 }
 
 fn main(){
+	// parse cmdline
+
 	let args = Args::parse();
+
+	// get date
 
 	let date = chrono::offset::Local::now().date_naive();
 	let days_in_month: usize = date.days_in_month().try_into().unwrap();
@@ -83,11 +94,15 @@ fn main(){
 	let month = date.month();
 	let today = date.day();
 
+	// read file
+
 	let data = fs::read_to_string(args.bills_toml)
 		.unwrap();
 
 	let data = data.parse::<Table>()
 		.unwrap();
+
+	// calculate income/expenditures
 
 	let (income, expenditures) = {
 
@@ -136,18 +151,33 @@ fn main(){
 		(income, expenditures)
 	};
 
-	let money_per_day = income / days_in_month as f64; // whatevert just use a cast // TODO see if we can do it the other way
+	// calculate ballane
+
+	let money_per_day = income / days_in_month as f64;
 
 	let ballance = {
 
-		let mut ballance = vec![(0.0_f64, 0.0_f64); days_in_month];
+		let mut ballance =
+			vec![
+				BallancePoint {
+					money_so_far: 0.0_f64,
+					ballance_today_from_month_avg: 0.0_f64,
+				};
+				days_in_month
+			];
 
 		let mut money_so_far = 0.0_f64;
 
 		for idx in 0..ballance.len(){
-			let bal_this_day = money_per_day - expenditures[idx];
-			money_so_far += bal_this_day;
-			ballance[idx] = (money_so_far, bal_this_day);
+
+			let money_this_day_from_month_avg = money_per_day - expenditures[idx];
+			money_so_far += money_this_day_from_month_avg;
+
+			ballance[idx] =
+				BallancePoint {
+					money_so_far: money_so_far,
+					ballance_today_from_month_avg: money_this_day_from_month_avg,
+				};
 		}
 
 		ballance
@@ -157,10 +187,12 @@ fn main(){
 
 	println!("date: ballance_so_far [ballance_this_day]");
 
-	for (idx, (ballance_so_far, ballance_this_day)) in ballance.iter().enumerate() {
+	for (idx, bal) in ballance.iter().enumerate() {
 		let day = idx + 1;
+		let money_so_far = bal.money_so_far;
+		let ballance_today_from_month_avg = bal.ballance_today_from_month_avg;
 
-		print!("{year:02}-{month:02}-{day:02}: {ballance_so_far:7.2} [{ballance_this_day:6.2}]");
+		print!("{year:02}-{month:02}-{day:02}: {money_so_far:7.2} [{ballance_today_from_month_avg:6.2}]");
 		if day == today.try_into().unwrap() {
 			println!(" <");
 		}else{
@@ -202,32 +234,32 @@ fn main(){
     };
     // println!("avg_median_spendings={avg_median_spendings}");
 
-	for (idx, (ballance_so_far, _ballance_this_day)) in ballance.iter().enumerate() {
+	for (idx, bal) in ballance.iter().enumerate() {
         let day_usize: usize = idx + 1;
 		let day_f32 = day_usize as f32;
 
-        let ballance = *ballance_so_far as f32;
+		let money_so_far: f32 = bal.money_so_far as f32;
 
 		if day_usize <= today.try_into().unwrap() {
-			graph_till_today.push((day_f32, ballance));
+			graph_till_today.push((day_f32, money_so_far));
 
 			if day_usize == today.try_into().unwrap() {
-				graph_after_today_no_spend.push((day_f32, ballance));
-				graph_after_today_avg_spend.push((day_f32, ballance));
-				graph_after_today_no_income.push((day_f32, ballance));
-				graph_after_today_avg_median.push((day_f32, ballance));
+				graph_after_today_no_spend.push((day_f32, money_so_far));
+				graph_after_today_avg_spend.push((day_f32, money_so_far));
+				graph_after_today_no_income.push((day_f32, money_so_far));
+				graph_after_today_avg_median.push((day_f32, money_so_far));
 			}
 
 		}else{
-            graph_after_today_no_spend.push((day_f32, ballance));
+            graph_after_today_no_spend.push((day_f32, money_so_far));
 
 			let num_day_after_today: f32 = day_f32 - today as f32;
 
-            graph_after_today_avg_spend.push((day_f32, ballance - num_day_after_today * avg_spendings as f32));
+            graph_after_today_avg_spend.push((day_f32, money_so_far - num_day_after_today * avg_spendings as f32));
 
             graph_after_today_no_income.push((day_f32, graph_after_today_no_income[0].1));
 
-			graph_after_today_avg_median.push((day_f32, ballance - num_day_after_today * avg_median_spendings as f32))
+			graph_after_today_avg_median.push((day_f32, money_so_far - num_day_after_today * avg_median_spendings as f32))
         }
 	}
 
