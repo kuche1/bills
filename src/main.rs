@@ -1,4 +1,7 @@
 
+// TODO
+// make it able to look at the previouis month(s) and graph them too
+
 use clap::Parser; // cargo add clap --features derive
 use toml::Table; // cargo add toml
 use std::fs;
@@ -84,6 +87,7 @@ fn recursively_sum(value: Value) -> f32 {
 //////
 ////// exterpolations
 //////
+// TODO problema s tezi exterpolate-vashti funkcii e che rabotqt vurhu raw data a ne vurno delti, eto primer: za da napravq hubav exterpolator za ostavashtite mi pari za vseki den na men mi trqbva informaciq za tova kolko sa samite pari, NO ako vmesto tova kato vhod poluchavam nqkakvi delti i vrushtam delti tova izobshto ne e problem
 
 fn exterpolated_data_to_graph_data(data: Vec<f32>, today: f32) -> Vec<(f32, f32)> {
 	data
