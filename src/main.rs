@@ -26,6 +26,7 @@ struct Args {
 
 #[derive(Clone)]
 struct BallancePoint {
+	money_before_today: f32,
 	money_so_far: f32,
 	ballance_today_from_month_avg: f32,
 	ballance_today_from_money_so_far: f32,
@@ -248,6 +249,7 @@ fn main(){
 		let mut ballance =
 			vec![
 				BallancePoint {
+					money_before_today: 0.0,
 					money_so_far: 0.0,
 					ballance_today_from_month_avg: 0.0,
 					ballance_today_from_money_so_far: 0.0,
@@ -259,15 +261,16 @@ fn main(){
 
 		for idx in 0..ballance.len(){
 			let days_left_in_month = (ballance.len() - idx) as f32;
+			let money_before_today = money_so_far;
 
 			let money_today_from_month_avg = money_per_day - expenditures[idx];
-
-			let money_today_from_money_so_far = money_today_from_month_avg + (money_so_far / days_left_in_month);
-
 			money_so_far += money_today_from_month_avg;
+
+			let money_today_from_money_so_far = money_today_from_month_avg + (money_before_today / days_left_in_month);
 
 			ballance[idx] =
 				BallancePoint {
+					money_before_today: money_before_today,
 					money_so_far: money_so_far,
 					ballance_today_from_month_avg: money_today_from_month_avg,
 					ballance_today_from_money_so_far: money_today_from_money_so_far,
@@ -306,17 +309,17 @@ fn main(){
         let day_usize: usize = idx + 1;
 		let day_f32 = day_usize as f32;
 
-		let money_so_far = bal.money_so_far as f32;
+		let money_so_far = bal.money_so_far;
 
 		if day_usize < today_usize {
 			graph_till_today.push((day_f32, money_so_far));
-			graph_till_today_dynamic_ballance.push((day_f32, bal.ballance_today_from_money_so_far as f32));
+			graph_till_today_dynamic_ballance.push((day_f32, bal.ballance_today_from_money_so_far));
 		}else{
 			if day_usize == today_usize {
 				graph_till_today.push((day_f32, money_so_far));
-				graph_till_today_dynamic_ballance.push((day_f32, bal.ballance_today_from_money_so_far as f32));
+				graph_till_today_dynamic_ballance.push((day_f32, bal.ballance_today_from_money_so_far));
 			}
-			graph_after_today_dynamic_ballance_no_spend.push((day_f32, bal.ballance_today_from_money_so_far as f32));
+			graph_after_today_dynamic_ballance_no_spend.push((day_f32, bal.ballance_today_from_money_so_far));
 		}
 	}
 
@@ -420,6 +423,17 @@ fn main(){
 			},
         )
 
+		// purple
+
+        .linecolorplot(
+			&Shape::Lines(&graph_after_today_avg_median),
+			RGB8 {
+				r: 200,
+				g: 100,
+				b: 200,
+			},
+        )
+
 		// blue
 
         .linecolorplot(
@@ -431,16 +445,7 @@ fn main(){
 			},
         )
 
-		// purple
-
-        .linecolorplot(
-			&Shape::Lines(&graph_after_today_avg_median),
-			RGB8 {
-				r: 200,
-				g: 100,
-				b: 200,
-			},
-        )
+		// flush
 
         .nice();
         // .display();
