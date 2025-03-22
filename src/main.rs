@@ -239,7 +239,7 @@ fn main(){
 		(income, expenditures)
 	};
 
-	// calculate ballane
+	// calculate ballance
 
 	let money_per_day = income / days_in_month as f32;
 
@@ -321,9 +321,9 @@ fn main(){
 	}
 
 	let (
+		graph_after_today_no_spend,
 		graph_after_today_avg_spend,
 		graph_after_today_avg_median,
-		graph_after_today_no_spend,
 	) = {
 		let data = 
 			ballance[.. today_usize]
@@ -335,15 +335,15 @@ fn main(){
 
 		(
 			exterpolated_data_to_graph_data(
+				exterpolate_no_spend(&ballance, today_usize),
+				today as f32
+			),
+			exterpolated_data_to_graph_data(
 				exterpolate_avg(&data, days_left),
 				today as f32
 			),
 			exterpolated_data_to_graph_data(
 				exterpolate_median_avg(&data, days_left),
-				today as f32
-			),
-			exterpolated_data_to_graph_data(
-				exterpolate_no_spend(&ballance, today_usize),
 				today as f32
 			),
 		)
