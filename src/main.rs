@@ -1,6 +1,7 @@
 
-// TODO
-// make it able to look at the previouis month(s) and graph them too
+// TODO this fucking shit sucks, fuck `textplots` you cannot label horizontally, you cannot use real RGB, the graph size parameter is fucking random, you cannot plot a single point
+
+// TODO make it able to look at the previouis month(s) and graph them too
 
 use clap::Parser; // cargo add clap --features derive
 use toml::Table; // cargo add toml
