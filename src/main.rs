@@ -374,7 +374,7 @@ fn main(){
 	let graph_width = graph_width * 11 / 6; // I'm happy with this, this seem to be consistent with all zoom levels (except maybe the most extreme zoom-in)
 	let graph_height = graph_height * 10 / 3; // 180
 
-	println!("green:no-spend purple:avg-median blue:avg"); // red:no-change
+	println!("green:no-spend purple:avg-median blue:avg red:dynamic-no-spend"); // red:no-change
 	// this fucking sucks
 	// I need to find the way to print based on this stupid `rgb`
 	// or I need to copy the relative functions from the draw create
@@ -403,19 +403,21 @@ fn main(){
 		.lineplot(&Shape::Lines(&graph_till_today_dynamic_daily_money))
 		.lineplot(&Shape::Lines(&mark_dynamic_daily_money))
 
-		// green
+		// red
 
-        .linecolorplot(
-			&Shape::Lines(&graph_after_today_no_spend),
+		.linecolorplot(
+			&Shape::Lines(&graph_after_today_dynamic_daily_money_no_spend),
 			RGB8 {
-				r: 40,
-				g: 200,
+				r: 200,
+				g: 40,
 				b: 40,
 			},
         )
 
-		.linecolorplot(
-			&Shape::Lines(&graph_after_today_dynamic_daily_money_no_spend),
+		// green
+
+        .linecolorplot(
+			&Shape::Lines(&graph_after_today_no_spend),
 			RGB8 {
 				r: 40,
 				g: 200,
