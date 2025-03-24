@@ -266,7 +266,13 @@ fn main(){
 			let money_today_from_month_avg = money_per_day - expenditures[idx];
 			money_so_far += money_today_from_month_avg;
 
-			let money_today_from_money_so_far = money_today_from_month_avg + (money_before_today / days_left_in_month);
+			let money_today_from_money_so_far = {
+				let mut money = money_before_today;
+				// if money < 0.0 {
+				// 	money = 0.0;
+				// }
+				money_today_from_month_avg + (money / days_left_in_month)
+			};
 
 			ballance[idx] =
 				BallancePoint {
