@@ -1,5 +1,6 @@
 
 // TODO this fucking shit sucks, fuck `textplots` you cannot label horizontally, you cannot use real RGB, the graph size parameter is fucking random, you cannot plot a single point
+// also: the graph indicators (the Y axis) suck because they reflect the value on the very top pixel, and it looks wrong (one would expect they indicate the pixel in the middle)
 
 // TODO make it able to look at the previouis month(s) and graph them too
 
@@ -16,6 +17,8 @@ use textplots::{LabelFormat, LabelBuilder};
 use textplots::{TickDisplay, TickDisplayBuilder};
 // use textplots::{LineStyle, AxisBuilder};
 use term_size; // cargo add term_size
+use std::path::Path;
+use clap_lex::OsStrExt; // cargo add clap_lex // this is weird - the compiler told be to `use` this, and yet I had to `cargo add` it
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -172,21 +175,53 @@ fn exterpolate_no_spend(ballance: &Vec<BallancePoint>, today: usize) -> Vec<f32>
 fn main(){
 	// parse cmdline
 
-	let args = Args::parse();
+	let input_toml = {
+		let args = Args::parse();
+
+		args.bills_toml
+	};
 
 	// get date
 
-	let date = chrono::offset::Local::now().date_naive();
-	let days_in_month: usize = date.days_in_month().try_into().unwrap();
-	let year = date.year();
-	let month = date.month();
-	let today = date.day();
+	let (days_in_month, year, month, today) = {
+
+		// // this whole thing seems jabroni (not because of the idea but because of rust)
+
+		let date = Path::new(&input_toml);
+		//let date = date.file_name().unwrap(); // "2025.03.toml"
+		let date = date.file_stem().unwrap(); // "2025.03"
+		// dbg!(date);
+		let year_month: Vec<_> = date.split(".").collect();
+		// dbg!(&year_month);
+		let [year, month] = year_month[..] else { panic!() };
+		// dbg!(year);
+		// dbg!(month);
+		let input_year = year.to_str().unwrap().parse::<i32>().unwrap();
+		// dbg!(year);
+		let input_month = month.to_str().unwrap().parse::<u32>().unwrap();
+		// dbg!(month);
+		let date = chrono::NaiveDate::from_ymd_opt(input_year, input_month, 1).unwrap();
+		let input_days_in_month = date.days_in_month();
+
+		// what data is today?
+		let date = chrono::offset::Local::now().date_naive();
+		let today_days_in_month: usize = date.days_in_month().try_into().unwrap();
+		let today_year = date.year();
+		let today_month = date.month();
+		let today_day = date.day();
+
+		if (input_year == today_year) && (input_month == today_month) {
+			(today_days_in_month, today_year, today_month, today_day)
+		}else{
+			(input_days_in_month.try_into().unwrap(), input_year, input_month, input_days_in_month.try_into().unwrap())
+		}
+	};
 
 	let today_usize: usize = today.try_into().unwrap();
 
 	// read file
 
-	let data = fs::read_to_string(args.bills_toml)
+	let data = fs::read_to_string(input_toml)
 		.unwrap();
 
 	let data = data.parse::<Table>()
@@ -268,7 +303,7 @@ fn main(){
 			money_so_far += money_today_from_month_avg;
 
 			let money_today_from_money_so_far = {
-				let mut money = money_before_today;
+				let money = money_before_today;
 				// if money < 0.0 {
 				// 	money = 0.0;
 				// }
